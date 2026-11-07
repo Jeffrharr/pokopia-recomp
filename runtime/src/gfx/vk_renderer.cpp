@@ -49,7 +49,8 @@ void barrier(VkCommandBuffer cmd, VkImage img, const ImageState& from, const Ima
     vkCmdPipelineBarrier2(cmd, &di);
 }
 
-const ImageState kUndefined = {VK_IMAGE_LAYOUT_UNDEFINED, VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT, 0};
+// a just-acquired image: the stage the acquire semaphore's wait names, so the layout transition waits for the presentation engine
+const ImageState kAcquired = {VK_IMAGE_LAYOUT_UNDEFINED, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, 0};
 const ImageState kColorAtt = {VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
                               VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT};
 const ImageState kTransferSrc = {VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_PIPELINE_STAGE_2_TRANSFER_BIT, VK_ACCESS_2_TRANSFER_READ_BIT};
@@ -703,7 +704,7 @@ bool Renderer::begin_frame(FrameInfo* out) {
         vkCmdWriteTimestamp2(slot.cmd, VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT, slot.queries, 0);
     }
     Impl::Target& t = s.targets[idx];
-    barrier(slot.cmd, t.image, kUndefined, kColorAtt);
+    barrier(slot.cmd, t.image, kAcquired, kColorAtt);
 
     s.cur_image = idx;
     s.info = FrameInfo{slot.cmd, t.image, t.view, s.format, s.extent, s.cur_slot, idx, s.frame_number, s.kind != extras::OutputKind::Sdr8};

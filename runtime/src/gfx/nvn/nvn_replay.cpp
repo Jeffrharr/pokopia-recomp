@@ -303,8 +303,10 @@ struct VbShadow { VkBuffer buf = VK_NULL_HANDLE; VkDeviceSize off = 0, size = 0,
 VbShadow g_vbsh[16];
 struct IbShadow { VkBuffer buf = VK_NULL_HANDLE; VkDeviceSize off = 0; VkIndexType type = VK_INDEX_TYPE_NONE_KHR; bool ok = false; };
 IbShadow g_ibsh;
+bool g_vb_bound_in_cb = false;        // vkCmdBindVertexBuffers2 was called in this command buffer since the last pipeline without dynamic strides (they need one)
 void shadow_invalidate() {
     g_dsh = DynShadow();
+    g_vb_bound_in_cb = false;     // a pipeline bound outside the replay (a masked clear) invalidated the strides too
     for (VbShadow& v : g_vbsh) v = VbShadow();
     g_ibsh = IbShadow();
 }
@@ -383,7 +385,6 @@ bool occ_ready() {
 
 uint8_t g_key_dummy_binding = 0;      // 1 + the binding that feeds the defaults of unset vertex attributes (0: none)
 bool g_want_depth_ro = false;         // some texture this draw samples is the current depth attachment
-bool g_vb_bound_in_cb = false;        // vkCmdBindVertexBuffers2 was called in this command buffer (dynamic strides need one)
 
 // [nvn] trace_frame = N (NXRT_NVN_TRACE_FRAME): every draw, clear, copy and dispatch of the frame that is presented as number N is logged
 // at Info ("trace ..." lines): programs, render targets, sampled textures, blend and depth state. For finding out what a frame does.
